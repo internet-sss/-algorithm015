@@ -1,5 +1,23 @@
 1.[62. 不同路径](https://leetcode-cn.com/problems/unique-paths/)
 ```java
+// 1. 额外二维空间动态规划
+public int uniquePaths(int m, int n) {
+    if (m == 0 && n == 0) {
+        return 0;
+    }
+
+    int[][] dp = new int[m][n];
+    for (int i = 0; i < m; i ++) dp[i][0] = 1;
+    for (int i = 0; i < n; i ++) dp[0][i] = 1;
+
+    for (int i = 1; i < m; i ++) {
+        for (int j = 1; j < n; j ++) {
+            dp[i][j] = dp[i][j - 1] + dp[i - 1][j];
+        }
+    }
+
+    return dp[m - 1][n - 1];
+}
 
 // 2. 额外一维空间动态规划
 public int uniquePaths(int m, int n) {
@@ -21,28 +39,84 @@ public int uniquePaths(int m, int n) {
     return dp[n - 1];
 }
 
-// 1. 额外二维空间动态规划
-public int uniquePaths(int m, int n) {
-    if (m == 0 && n == 0) {
-        return 0;
-    }
-
-    int[][] dp = new int[m][n];
-    for (int i = 0; i < m; i ++) dp[i][0] = 1;
-    for (int i = 0; i < n; i ++) dp[0][i] = 1;
-
-    for (int i = 1; i < m; i ++) {
-        for (int j = 1; j < n; j ++) {
-            dp[i][j] = dp[i][j - 1] + dp[i - 1][j];
-        }
-    }
-
-    return dp[m - 1][n - 1];
-}
 ```
 
 2.[63. 不同路径 II](https://leetcode-cn.com/problems/unique-paths-ii/)
 ```java
+// 1.二维额外空间动态规划
+public int uniquePathsWithObstacles(int[][] obstacleGrid) {
+    if (obstacleGrid.length == 0 || obstacleGrid[0][0] == 1) return 0;
+
+    int[][] dp = new int[obstacleGrid.length][obstacleGrid[0].length];
+    dp[0][0] = 1;
+    for (int i = 1; i < obstacleGrid.length; i++) {
+        if (obstacleGrid[i][0] == 1) dp[i][0] = 0;
+        else dp[i][0] = dp[i - 1][0];
+    }
+    for (int j = 1; j < obstacleGrid[0].length; j ++) {
+        if (obstacleGrid[0][j] == 1) dp[0][j] = 0;
+        else dp[0][j] = dp[0][j - 1];
+    }
+
+    for (int i = 1; i < obstacleGrid.length; i ++) {
+        for (int j = 1; j <obstacleGrid[0].length; j ++) {
+            if (obstacleGrid[i][j] == 1) {
+                dp[i][j] = 0;
+            } else {
+                dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+            }
+        }
+    }
+
+    return dp[obstacleGrid.length - 1][obstacleGrid[0].length - 1];
+}
+
+// 2. 一维额外空间动态规划
+public int uniquePathsWithObstacles(int[][] obstacleGrid) {
+    if (obstacleGrid.length == 0 || obstacleGrid[0][0] == 1) return 0;
+
+    int[] dp = new int[obstacleGrid[0].length];
+    dp[0] = 1;
+    for (int j = 1; j < obstacleGrid[0].length; j ++) {
+        if (obstacleGrid[0][j] == 1) dp[j] = 0;
+        else dp[j] = dp[j - 1];
+    }
+
+    for (int i = 1; i < obstacleGrid.length; i ++) {
+        for (int j = 0; j <obstacleGrid[0].length; j ++) {
+            if (obstacleGrid[i][j] == 1) dp[j] = 0;
+            else if (j == 0) continue;
+            else dp[j] = dp[j] + dp[j - 1];
+        }
+    }
+
+    return dp[obstacleGrid[0].length - 1];
+}
+
+// 3. dfs + divide + memory
+public int uniquePathsWithObstacles(int[][] obstacleGrid) {
+    if (obstacleGrid.length == 0 || obstacleGrid[0][0] == 1) return 0;
+
+    int[][] memo = new int[obstacelGrid.length][obstacleGrid[0].length];
+    for (int i = 0; i < obstacleGrid.length; i ++) 
+        for (int j = 0; j < obstacleGrid[0].length; j ++)
+            memo[i][j] = -1;
+
+    return divideDfsMemory(obstacleGrid, 0, 0, memo);
+}
+
+private int divideDfsMemory(int[][] obstacleGrid, int r, int c, int[][] memo) {
+    if (r == obstacleGrid.length - 1 && c == obstacleGrid[0].length - 1 && obstacleGrid[r][c] == 0) return 1;
+    if (r >= obstacleGrid.length || c >= obstacleGrid[0].length || obstacleGrid[r][c] == 1) return 0;
+    if (memo[r][c] > -1) return memo[r][c];
+
+    int sum = 0;
+    sum += divideDfsMemory(obstacleGrid, r + 1, c, memo);
+    sum += divideDfsMemory(obstacleGrid, r, c + 1, memo);
+    memo[r][c] = sum;
+
+    return sum;
+}
 
 ```
 
@@ -89,6 +163,52 @@ public int uniquePaths(int m, int n) {
 11.[198. 打家劫舍](https://leetcode-cn.com/problems/house-robber/)
 ```java
 
+// dfs + memory
+Map<Integer, Integer> map = new HashMap<>();
+public int rob(int[] nums) {
+    if (nums.length == 0) return 0;
+
+    return Math.max(dfs(nums, 0), dfs(nums, 1));
+}
+
+private int dfs(int[] nums, int start) {
+    if (start >= nums.length) return 0;
+    if (map.containsKey(start)) return map.get(start);
+
+    int res = Math.max(dfs(nums, start + 1, dfs(nums, start + 2) + nums[start]));
+    map.put(start, res);
+
+    return res;
+}
+
+// 自底向上，虚拟房源，额外空间 O(n)
+public int rob(int[] nums) {
+    if (nums.length == 0) return 0;
+    int[] dp = new int[nums.length + 2];
+    dp[nums.length + 1] = 0;
+    dp[nums.length] = 0;
+
+    for (int i = nums.length - 1; i >= 0; i --) {
+        dp[i] = Math.max(dp[i + 1], dp[i + 2] + nums[i]);
+    }
+
+    return dp[0];
+}
+
+// 自底向上，虚拟房源，额外空间 O(1)
+public int rob(int[] nums) {
+    int res = 0;
+    int dp_i_1 = 0;
+    int dp_i_2 = 0;
+
+    for (int i = nums.length - 1; i >= 0; i --) {
+        res = Math.max(dp_i_1, dp_i_2 + nums[i]);
+        dp_i_2 = dp_i_1;
+        dp_i_1 = res;
+    }
+
+    return res;
+}
 ```
 
 12.[213. 打家劫舍 II](https://leetcode-cn.com/problems/house-robber-ii/description/)
@@ -156,7 +276,91 @@ public int uniquePaths(int m, int n) {
 24.[64. 最小路径和](https://leetcode-cn.com/problems/minimum-path-sum/)
 ```java
 
-// 4. 递归 + 分治 + 记忆化搜索
+// 1. 额外二维空间动态规划
+public int minPathSum(int[][] grid) {
+    if (grid.length == 0) {
+        return 0;
+    }
+
+    int[][] dp = new int[grid.length][grid[0].length];
+    dp[0][0] = grid[0][0];
+
+    for (int i = 1; i < grid.length; i ++) dp[i][0] = grid[i][0] + dp[i - 1][0];
+    for (int i = 1; i < grid[0].length; i ++) dp[0][i] = grid[0][i] + dp[0][i - 1];
+
+    for (int i = 1; i < grid.length; i ++) {
+        for (int j = 1; j < grid[0].length; j ++) {
+            dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j];
+        }
+    }
+
+    return dp[grid.length - 1][grid[0].length - 1];
+}
+
+
+// 2. 原地二维空间动态规划
+public int minPathSum(int[][] grid) {
+    if (grid.length == 0) {
+        return 0;
+    }
+
+    for (int i = 1; i < grid.length; i ++) grid[i][0] = grid[i][0] + grid[i - 1][0];
+    for (int i = 1; i < grid[0].length; i ++) grid[0][i] = grid[0][i] + grid[0][i - 1];
+
+    for (int i = 1; i < grid.length; i ++) {
+        for (int j = 1; j < grid[0].length; j ++) {
+            grid[i][j] = Math.min(grid[i - 1][j], grid[i][j - 1]) + grid[i][j];
+        }
+    }
+
+    return grid[grid.length - 1][grid[0].length - 1];
+}
+
+// 3. 额外一维空间动态规划
+public int minPathSum(int[][] grid) {
+    if (grid.length == 0) {
+        return 0;
+    }
+
+    int[] dp = new int[grid[0].length];
+
+    for (int i = 0; i < grid.length; i ++) {
+        for (int j = 0; j < grid[0].length; j ++) {
+            // 初始化 [0][0] 格子
+            if (i == 0 && j == 0) dp[j] = grid[i][j];
+            // 第 0 行格子，从前到后一次累加上个格子的值
+            else if (i == 0) dp[j] = dp[j - 1] + grid[i][j];
+            // 从上一个格子到当前格子，因此，路径上的数字和 = 上一个格子 + 当前格子
+            else if (j == 0) dp[j] = dp[j] + grid[i][j];
+            // dp[j] 格子上方   dp[j-1] 格子前方
+            else dp[j] = Math.min(dp[j], dp[j - 1]) + grid[i][j];
+        }
+    }
+
+    return dp[dp.length - 1];
+}
+
+// 4. 额外一维空间优化 if else
+public int minPathSum(int[][] grid) {
+    if (grid.length == 0) {
+        return 0;
+    }
+
+    int[] dp = new int[grid[0].length];
+    dp[0] = grid[0][0];
+    for (int i = 1; i < grid[0].length; i ++) dp[i] = dp[i - 1] + grid[0][i];
+
+    for (int i = 1; i < grid.length; i ++) {
+        for (int j = 0; j < grid[0.length; j ++) {
+            if (j == 0) dp[j] = dp[j] + grid[i][j];
+            else dp[j] = Math.min(dp[j], dp[j - 1]) + grid[i][j];
+        }
+    }
+
+    return dp[grid[0].length - 1];
+}
+
+// 5. 递归 + 分治 + 记忆化搜索
 private int M;
 private int N;
 private int[][] memory;
@@ -186,69 +390,6 @@ private int recursion(int[][] grid, int r, int c) {
     memory[r][c] = res;
 
     return res;
-}
-
-// 3. 额外一维空间动态规划
-public int minPathSum(int[][] grid) {
-    if (grid.length == 0) {
-        return 0;
-    }
-
-    int[] dp = new int[grid[0].length];
-
-    for (int i = 0; i < grid.length; i ++) {
-        for (int j = 0; j < grid[0].length; j ++) {
-            // 初始化 [0][0] 格子
-            if (i == 0 && j == 0) dp[j] = grid[i][j];
-            // 第 0 行格子，从前到后一次累加上个格子的值
-            else if (i == 0) dp[j] = dp[j - 1] + grid[i][j];
-            // 从上一个格子到当前格子，因此，路径上的数字和 = 上一个格子 + 当前格子
-            else if (j == 0) dp[j] = dp[j] + grid[i][j];
-            // dp[j] 格子上方   dp[j-1] 格子前方
-            else dp[j] = Math.min(dp[j], dp[j - 1]) + grid[i][j];
-        }
-    }
-
-    return dp[dp.length - 1];
-}
-
-// 2. 原地二维空间动态规划
-public int minPathSum(int[][] grid) {
-    if (grid.length == 0) {
-        return 0;
-    }
-
-    for (int i = 1; i < grid.length; i ++) grid[i][0] = grid[i][0] + grid[i - 1][0];
-    for (int i = 1; i < grid[0].length; i ++) grid[0][i] = grid[0][i] + grid[0][i - 1];
-
-    for (int i = 1; i < grid.length; i ++) {
-        for (int j = 1; j < grid[0].length; j ++) {
-            grid[i][j] = Math.min(grid[i - 1][j], grid[i][j - 1]) + grid[i][j];
-        }
-    }
-
-    return grid[grid.length - 1][grid[0].length - 1];
-}
-
-// 1. 额外二维空间动态规划
-public int minPathSum(int[][] grid) {
-    if (grid.length == 0) {
-        return 0;
-    }
-
-    int[][] dp = new int[grid.length][grid[0].length];
-    dp[0][0] = grid[0][0];
-
-    for (int i = 1; i < grid.length; i ++) dp[i][0] = grid[i][0] + dp[i - 1][0];
-    for (int i = 1; i < grid[0].length; i ++) dp[0][i] = grid[0][i] + dp[0][i - 1];
-
-    for (int i = 1; i < grid.length; i ++) {
-        for (int j = 1; j < grid[0].length; j ++) {
-            dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j];
-        }
-    }
-
-    return dp[grid.length - 1][grid[0].length - 1];
 }
 ```
 
